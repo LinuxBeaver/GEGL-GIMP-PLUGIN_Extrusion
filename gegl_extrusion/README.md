@@ -1,4 +1,4 @@
-gegl:pencil
+
 =========
 
 A custom GEGL operation (and by extension GIMP filter) 
