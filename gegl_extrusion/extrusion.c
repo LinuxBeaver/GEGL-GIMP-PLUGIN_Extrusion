@@ -14,7 +14,7 @@
  * License along with GEGL; if not, see <https://www.gnu.org/licenses/>.
  *
  * Copyright 2006 Øyvind Kolås <pippin@gimp.org>
- * 2022 Beaver (GEGL extrusion) Credit also goes to Mahvin a moderator of GimpChat.com for making Beaver's GEGL Graph discovery better
+ * 2022 Beaver (GEGL extrusion) Credit also goes to Mahvin, a moderator of GimpChat.com for making Beaver's GEGL Graph discovery better
  */
 
 #include "config.h"
@@ -22,19 +22,19 @@
 
 #ifdef GEGL_PROPERTIES
 
-property_double (center_x, _("Center X"), 2.5)
+property_double (center_x, _("Center X"), -2.1)
     value_range (-3.5, 3.5)
     ui_range    (-3.5, 3.5)
     ui_meta     ("unit", "relative-coordinate")
     ui_meta     ("axis", "x")
 
-property_double (center_y, _("Center Y"), -2.6)
+property_double (center_y, _("Center Y"), -1.4)
     value_range (-3.5, 3.5)
     ui_range    (-3.5, 3.5)
     ui_meta     ("unit", "relative-coordinate")
     ui_meta     ("axis", "y")
 
-property_double (factor, _("Length of extrusion"), 0.018)
+property_double (factor, _("Length of extrusion"), 0.005)
     value_range (0, 0.180)
     ui_range    (0, 0.180)
     ui_gamma    (2.0)
@@ -48,20 +48,26 @@ property_enum (algorithm, _("Algorithm"),
                GeglEdgeAlgo1, gegl_edge_algo1,
                GEGL_EDGE_GRADIENT1)
   description (_("Edge detection algorithm"))
+    ui_meta     ("role", "output-extent")
 
-property_double (amount, _("Amount of colors on the extrusion"), 2.4)
+
+
+property_double (opacity, _("Slide up to enable colors on extrusion"), 0.0)
+    description (_("Global opacity value that is always used on top of the optional auxiliary input buffer."))
+    value_range (0, 1)
+    ui_range    (0.0, 1)
+
+property_double (amount, _("Amount of colors on the extrusion"), 3.7)
     description (_("Edge detection amount"))
     value_range (1.0, 10.0)
     ui_range    (1.0, 10.0)
-
-
 
 
 property_int (depth, _("Increase roughness"), 14)
     description (_("Filter width"))
     value_range (1, 30)
 
-property_double (value, _("Short trails need higher. Long trails need lower."), 0.25)
+property_double (value, _("Short trails work eitheway. Long trails need lower."), 0.100)
     value_range (0.10, 0.43)
     ui_range    (0.10, 0.43)
     description(_("Scalar threshold level (overridden if an auxiliary input buffer is provided.)."))
@@ -77,7 +83,7 @@ property_double (black_level, _("Black level to remove hot pixels"), 0.0)
   value_range (0, 1)
     value_range (0.0, 0.10)
 
-property_double (exposure, _("Exposure decreasation to remove hot pixels"), -2.50)
+property_double (exposure, _("Exposure decreasation to remove hot pixels"), -1.40)
     description (_("Relative brightness change in stops"))
   value_range (-5, 5)
     ui_range    (-5.0, 5.0)
@@ -94,6 +100,7 @@ property_double  (percentile, _("Decrease median percentile to remove hot pixels
 
 
 
+
 #else
 
 #define GEGL_OP_META
@@ -105,7 +112,7 @@ property_double  (percentile, _("Decrease median percentile to remove hot pixels
 static void attach (GeglOperation *operation)
 {
   GeglNode *gegl = operation->node;
-  GeglNode *input, *output, *zmb, *edge, *emboss, *alpha, *nr, *box, *nop, *opacity, *median, *chroma, *brightness;
+  GeglNode *input, *output, *zmb, *edge, *screen, *multiply, *alpha, *nr, *nop2, *box, *nop, *bevel, *opacity, *median, *chroma, *brightness;
 
   input    = gegl_node_get_input_proxy (gegl, "input");
   output   = gegl_node_get_output_proxy (gegl, "output");
@@ -116,15 +123,26 @@ static void attach (GeglOperation *operation)
                                   NULL);
 
 
-  edge = gegl_node_new_child (gegl,
-                                  "operation", "gegl:zzescreen",
+  screen = gegl_node_new_child (gegl,
+                                  "operation", "gegl:screen",
                                   NULL);
+
+
+  edge = gegl_node_new_child (gegl,
+                                  "operation", "gegl:edge",
+                                  NULL);
+
 
   zmb = gegl_node_new_child (gegl,
                                   "operation", "gegl:motion-blur-zoom",
                                   NULL);
-   emboss = gegl_node_new_child (gegl,
-                                  "operation", "gegl:mbd",
+
+   multiply = gegl_node_new_child (gegl,
+                                  "operation", "gegl:multiply",
+                                  NULL);
+
+   bevel = gegl_node_new_child (gegl,
+                                  "operation", "gegl:bevel",
                                   NULL);
 
 
@@ -154,6 +172,12 @@ static void attach (GeglOperation *operation)
                                   "operation", "gegl:nop",
                                   NULL);
 
+
+  nop2 = gegl_node_new_child (gegl,
+                                  "operation", "gegl:nop",
+                                  NULL);
+
+
   opacity = gegl_node_new_child (gegl,
                                   "operation", "gegl:opacity",
                                   NULL);
@@ -166,7 +190,12 @@ static void attach (GeglOperation *operation)
 
 
 
-  gegl_node_link_many (input, zmb, emboss, alpha, nop, edge, median, chroma, brightness, output, NULL);
+  gegl_node_link_many (input, zmb, nop, multiply, alpha, nop2, screen, median, nr, chroma, brightness, output, NULL);
+  gegl_node_connect_from (multiply, "aux", bevel, "output"); 
+  gegl_node_connect_from (screen, "aux", opacity, "output"); 
+  gegl_node_link_many (nop, bevel, NULL);
+  gegl_node_link_many (nop2, edge, opacity, NULL);
+
 
 
   gegl_operation_meta_redirect (operation, "algorithm", edge, "algorithm");
@@ -191,14 +220,14 @@ static void attach (GeglOperation *operation)
 
   gegl_operation_meta_redirect (operation, "value", alpha, "value");
 
-  gegl_operation_meta_redirect (operation, "type", emboss, "type");
 
 
-  gegl_operation_meta_redirect (operation, "depth", emboss, "radius2");
+  gegl_operation_meta_redirect (operation, "depth", bevel, "bevel2");
 
   gegl_operation_meta_redirect (operation, "medianradius", median, "radius");
   gegl_operation_meta_redirect (operation, "percentile", median, "percentile");
   gegl_operation_meta_redirect (operation, "chroma", chroma, "chroma");
+  gegl_operation_meta_redirect (operation, "opacity", opacity, "value");
 
 
 
