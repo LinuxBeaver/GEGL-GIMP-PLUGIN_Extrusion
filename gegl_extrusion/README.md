@@ -3,8 +3,6 @@
 
 A custom GEGL operation (and by extension GIMP filter) 
 
-You must build zzedge and extrusion .so/dll and put them in /gegl-0.4/plug-ins
-
 ## Compiling and Installing
 
 ### Linux
