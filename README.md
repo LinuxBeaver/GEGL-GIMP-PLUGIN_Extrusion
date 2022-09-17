@@ -4,3 +4,17 @@ Put extrusion .so/dll and bevel .so/dll in /gegl-0.4/plug-ins. It is okay to hav
 ![image preview](extrusion_best.png )
  
  Make sure to use the behind blend mode or a layer behind the original. I did this intentionally so GEGL-extrusion could be more non-destructive and edited afterward manually.
+ 
+ 
+
+## OS specific location to put GEGL Filter binaries 
+
+Windows
+ C:\\Users\<YOUR NAME>\AppData\Local\gegl-0.4\plug-ins
+ 
+ Linux 
+ /home/(USERNAME)/.local/share/gegl-0.4/plug-ins
+ 
+ Linux (Flatpak)
+ /home/(USERNAME)/.var/app/org.gimp.GIMP/data/gegl-0.4/plug-ins
+
