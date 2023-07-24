@@ -36,8 +36,7 @@ id=2  gegl:dst-atop aux=[  ref=2 median-blur radius=2 alpha-percentile=-1 gaussi
 #define TUTORIAL \
 "  id=1  gegl:over aux=[ ref=1  xor aux=[   median-blur radius=2.4 alpha-percentile=2    ]  "\
 
-property_string (string, _("hidden gegl graph"), TUTORIAL)
-      ui_meta     ("role", "output-extent")
+
 /*It is mid 2023 and I still don't know how to hide these from the GEGL Graph. Everything else is easy to hide though*/
 
 
@@ -112,7 +111,7 @@ in a damaged way because there global opacity is way to high. Median blur radius
                                   NULL);
 
   graph    = gegl_node_new_child (gegl,
-                                  "operation", "gegl:gegl",
+                                  "operation", "gegl:gegl", "string", TUTORIAL,
                                   NULL);
 
 

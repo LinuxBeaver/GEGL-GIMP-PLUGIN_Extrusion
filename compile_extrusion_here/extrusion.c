@@ -276,10 +276,11 @@ gegl_op_class_init (GeglOpClass *klass)
   gegl_operation_class_set_keys (operation_class,
     "name",        "lb:extrusion",
     "title",       _("Extrusion for styled text"),
-    "categories",  "Artistic",
     "reference-hash", "156j6bfzaa5014f2ks3b27ac",
     "description", _("GEGL makes a extrusion effect"
                      ""),
+    "gimp:menu-path", "<Image>/Filters/Text Styling",
+    "gimp:menu-label", _("Extrusion..."),
     NULL);
 }
 
